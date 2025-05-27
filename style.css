@@ -1,0 +1,21 @@
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+button:focus,
+input:focus,
+textarea:focus {
+  outline: none;
+}
+
+button {
+  transition: background-color 0.3s ease;
+}
+
+img {
+  object-fit: cover;
+}
+
+#toast {
+  transition: opacity 0.3s ease-in-out;
+}

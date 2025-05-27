@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Pre-Order - AutoGear Hub</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- ✅ Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBhUjoLMHGVEZW5lFEZ9cfigW5T362EJ6c",
+      authDomain: "autogearhub123.firebaseapp.com",
+      projectId: "autogearhub123",
+      storageBucket: "autogearhub123.appspot.com",
+      messagingSenderId: "276265834362",
+      appId: "1:276265834362:web:f783d3ee91246f04ec68c3"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+  </script>
+</head>
+<body class="text-white" id="preorderBody" style="background-size: cover; background-position: center;">
+  <div class="flex justify-center items-center h-screen bg-black bg-opacity-60 px-4">
+    <div class="bg-white bg-opacity-90 p-8 rounded-xl w-full max-w-md text-black shadow-lg">
+      <h2 class="text-2xl font-bold mb-6 text-center text-red-600">Enter Your Phone Number</h2>
+
+      <!-- Step 1: Phone -->
+      <div id="step1">
+        <label class="block mb-2 font-semibold">Phone Number (11 digits):</label>
+        <div class="flex">
+          <span class="bg-gray-200 px-4 py-2 border rounded-l text-black font-semibold">+60</span>
+          <input type="tel" id="phone" class="w-full px-4 py-2 border rounded-r" placeholder="e.g. 118556443" required />
+        </div>
+        <button onclick="confirmNumber()" class="w-full bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 mt-4">Next</button>
+      </div>
+
+      <!-- Step 2: Confirm Number -->
+      <div id="confirmStep" class="hidden">
+        <p class="mb-4">Is this your phone number?</p>
+        <p id="phonePreview" class="font-bold text-lg mb-4 text-center text-red-600"></p>
+        <button onclick="proceedToCheckout()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 w-full">Yes</button>
+      </div>
+
+      <!-- Step 3: Checkout -->
+      <div id="checkoutStep" class="hidden">
+        <label class="block font-semibold">Name:</label>
+        <input type="text" id="name" class="w-full px-4 py-2 rounded border mb-4" placeholder="Your Full Name" required />
+
+        <label class="block font-semibold">City:</label>
+        <input type="text" id="city" class="w-full px-4 py-2 rounded border mb-4" placeholder="e.g. Kuala Lumpur" required />
+
+        <label class="block font-semibold">Postal Code:</label>
+        <input type="text" id="postcode" class="w-full px-4 py-2 rounded border mb-4" placeholder="e.g. 43000" required />
+
+        <label class="block font-semibold">Full Address:</label>
+        <textarea id="address" class="w-full px-4 py-2 rounded border mb-4" placeholder="Street address, building etc." required></textarea>
+
+        <!-- Preview Block -->
+        <div class="bg-gray-100 text-black p-3 rounded border mb-4 hidden" id="previewBlock">
+          <h4 class="font-semibold text-red-600 mb-1">📦 Delivery Address Preview:</h4>
+          <p id="addressPreview" class="whitespace-pre-line text-sm"></p>
+        </div>
+
+        <p class="text-sm text-gray-600 mb-2">Estimated Pickup Date: <span id="pickupDate" class="font-semibold"></span></p>
+
+        <button onclick="finishOrder()" class="w-full bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Complete Order</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const car = JSON.parse(localStorage.getItem("whatsappCar"));
+    const body = document.getElementById("preorderBody");
+
+    if (car?.img) {
+      body.style.backgroundImage = `url('${car.img}')`;
+    } else {
+      body.style.backgroundImage = `url('https://images.unsplash.com/photo-1503376780353-7e6692767b70')`;
+    }
+
+    const today = new Date();
+    const pickup = new Date(today.setDate(today.getDate() + 2));
+    document.getElementById("pickupDate").textContent = pickup.toDateString();
+
+    function confirmNumber() {
+      const input = document.getElementById("phone").value.trim();
+      const fullPhone = input.startsWith("0") ? "60" + input.slice(1) : "60" + input;
+
+      if (!/^60[1][0-9]{8,9}$/.test(fullPhone)) {
+        return alert("Please enter a valid Malaysian phone number (11 digits total, starting with 60)");
+      }
+
+      document.getElementById("phonePreview").textContent = "+" + fullPhone;
+      localStorage.setItem("phoneNumber", "+" + fullPhone);
+      document.getElementById("step1").classList.add("hidden");
+      document.getElementById("confirmStep").classList.remove("hidden");
+    }
+
+    function proceedToCheckout() {
+      if (car) {
+        localStorage.setItem("finalOrder", JSON.stringify({ from: "car", name: car.name, img: car.img }));
+        window.location.href = "order-success.html";
+      } else {
+        document.getElementById("confirmStep").classList.add("hidden");
+        document.getElementById("checkoutStep").classList.remove("hidden");
+      }
+    }
+
+    async function finishOrder() {
+      const name = document.getElementById("name").value.trim();
+      const city = document.getElementById("city").value.trim();
+      const postcode = document.getElementById("postcode").value.trim();
+      const address = document.getElementById("address").value.trim();
+      const phone = localStorage.getItem("phoneNumber") || "-";
+      const estimatedDate = document.getElementById("pickupDate").textContent;
+      const cart = JSON.parse(localStorage.getItem("cart") || "[]");
+
+      if (!name || !city || !postcode || !address) {
+        alert("Please fill in all required fields.");
+        return;
+      }
+
+      const fullAddress = `${address}\n${postcode}\n${city}`;
+
+      const finalOrder = {
+        from: "product",
+        name,
+        phone,
+        address: fullAddress,
+        estimatedDate,
+        items: cart,
+        createdAt: new Date().toISOString()
+      };
+
+      try {
+        await db.collection("orders").add(finalOrder);
+        localStorage.setItem("finalOrder", JSON.stringify(finalOrder));
+        window.location.href = "order-success.html";
+      } catch (err) {
+        console.error("Firebase error:", err);
+        alert("Failed to save your order. Please try again.");
+      }
+    }
+
+    // Show preview
+    ["city", "postcode", "address"].forEach(id => {
+      document.getElementById(id).addEventListener("input", updatePreview);
+    });
+
+    function updatePreview() {
+      const city = document.getElementById("city").value.trim();
+      const postcode = document.getElementById("postcode").value.trim();
+      const address = document.getElementById("address").value.trim();
+
+      if (city && postcode && address) {
+        const full = `${address}\n${postcode}\n${city}`;
+        document.getElementById("addressPreview").textContent = full;
+        document.getElementById("previewBlock").classList.remove("hidden");
+      } else {
+        document.getElementById("previewBlock").classList.add("hidden");
+      }
+    }
+  </script>
+</body>
+</html>

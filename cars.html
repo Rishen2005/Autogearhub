@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Cars - AutoGear Hub</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- ✅ Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"></script>
+
+  <style>
+    .popup-blur {
+      position: fixed;
+      inset: 0;
+      background-color: rgba(0,0,0,0.7);
+      backdrop-filter: blur(6px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 50;
+    }
+    .popup-content {
+      background-color: white;
+      color: black;
+      padding: 1.5rem;
+      border-radius: 1rem;
+      max-width: 400px;
+      width: 90%;
+      text-align: center;
+    }
+    .popup-content ul {
+      list-style: disc;
+      padding-left: 1.5rem;
+      text-align: left;
+    }
+    .popup-content h2 {
+      font-weight: 700;
+      color: #dc2626;
+      margin-bottom: 0.5rem;
+    }
+    .popup-content button {
+      background-color: #16a34a;
+      color: white;
+      padding: 0.5rem 1rem;
+      margin-top: 1rem;
+      border-radius: 0.5rem;
+      font-weight: bold;
+    }
+    .popup-content button:hover {
+      background-color: #15803d;
+    }
+    .popup-content img {
+      margin: 0 auto 1rem;
+      width: 180px;
+      height: auto;
+      border-radius: 0.5rem;
+    }
+  </style>
+</head>
+<body class="text-white" style="background-image: url('https://images.unsplash.com/photo-1503376780353-7e6692767b70'); background-size: cover; background-position: center;">
+
+<!-- ✅ Firebase Config -->
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBhUjoLMHGVEZW5IFEZ9cfigW5T362EJ6c",
+    authDomain: "autogearhub123.firebaseapp.com",
+    projectId: "autogearhub123",
+    storageBucket: "autogearhub123.appspot.com",
+    messagingSenderId: "276265834362",
+    appId: "1:276265834362:web:f783d3ee91246f04ec68c3"
+  };
+  const app = firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+</script>
+
+<!-- Header -->
+<header class="bg-white bg-opacity-90 shadow sticky top-0 z-50 px-6 py-4 flex items-center justify-between">
+  <div class="flex items-center space-x-2">
+    <img src="images/logo.png" alt="Logo" class="h-10 w-10 rounded-full">
+    <h1 class="text-2xl font-bold text-red-600">AutoGear Hub</h1>
+  </div>
+  <nav class="space-x-4 text-black">
+    <a href="index.html">Home</a>
+    <a href="products.html">Products</a>
+    <a href="cars.html" class="text-red-600 font-semibold">Cars</a>
+    <a href="about.html">About</a>
+    <a href="cart.html">Cart</a>
+    <a href="login.html" id="authBtn">Login</a>
+  </nav>
+</header>
+
+<main class="p-6">
+  <h2 class="text-3xl font-bold text-center mb-8 text-red-600">Cars For Sale</h2>
+  <div class="grid grid-cols-2 md:grid-cols-5 gap-6" id="carGrid"></div>
+</main>
+
+<!-- Pop-up -->
+<div id="popup" class="popup-blur hidden">
+  <div class="popup-content">
+    <img id="carImage" src="" alt="Car Image">
+    <h2 id="carName"></h2>
+    <ul id="specList"></ul>
+    <button id="whatsappBtn">WhatsApp Seller</button>
+    <p class="mt-4 font-semibold">If not work, Scan QR to WhatsApp:</p>
+    <img id="qrCode" src="" alt="QR Code" class="mx-auto mt-2 w-32 h-32" />
+  </div>
+</div>
+
+<script>
+const user = JSON.parse(localStorage.getItem("user"));
+
+const cars = [
+  { id: 101, name: "Honda Civic", price: 68000, img: "images/car1.png" },
+  { id: 102, name: "Toyota Corolla", price: 64000, img: "images/car2.png" },
+  { id: 103, name: "Nissan Almera", price: 55000, img: "images/car3.png" },
+  { id: 104, name: "Mazda 3", price: 72000, img: "images/car4.png" },
+  { id: 105, name: "Perodua Myvi", price: 33000, img: "images/car5.png" },
+  { id: 106, name: "Proton Saga", price: 29000, img: "images/car6.png" },
+  { id: 107, name: "BMW 3 Series", price: 85000, img: "images/car7.png" },
+  { id: 108, name: "Mercedes-Benz A200", price: 89000, img: "images/car8.png" },
+  { id: 109, name: "Kia Picanto", price: 36000, img: "images/car9.png" },
+  { id: 110, name: "Hyundai Ioniq", price: 57000, img: "images/car10.png" }
+];
+
+const grid = document.getElementById("carGrid");
+cars.forEach(car => {
+  const div = document.createElement("div");
+  div.className = "bg-white bg-opacity-90 rounded-lg p-4 text-black";
+  div.innerHTML = `
+    <img src="${car.img}" alt="${car.name}" class="h-32 w-full object-cover rounded mb-2">
+    <h3 class="text-lg font-bold">${car.name}</h3>
+    <p class="text-sm line-through opacity-60">RM ${Math.floor(car.price * 1.3)}</p>
+    <p class="text-sm font-bold text-green-700">RM ${car.price}</p>
+    <button class="bg-red-600 text-white px-3 py-1 mt-2 rounded">WhatsApp Seller</button>
+  `;
+  const btn = div.querySelector("button");
+  btn.onclick = () => {
+    if (!user) {
+      localStorage.setItem("redirectAfterLogin", "cars.html");
+      localStorage.setItem("pendingCar", JSON.stringify(car));
+      return window.location.href = "login.html";
+    }
+    openPopup(car);
+  };
+  grid.appendChild(div);
+});
+
+// Pop-up logic
+function openPopup(car) {
+  const popup = document.getElementById("popup");
+  const qrImg = document.getElementById("qrCode");
+  const btn = document.getElementById("whatsappBtn");
+  const message = `Can I know more about this ${car.name}?`;
+  const waLink = `https://wa.me/60176602273?text=${encodeURIComponent(message)}`;
+
+  document.getElementById("carImage").src = car.img;
+  document.getElementById("carName").textContent = `${car.name} Specifications`;
+  document.getElementById("specList").innerHTML = `
+    <li>Year: 2020</li>
+    <li>Transmission: 8 SP Automatic</li>
+    <li>Fuel: Petrol</li>
+    <li>Type: Sedan</li>
+    <li>Seats: 5</li>
+    <li>Country: Malaysia</li>
+    <li>Engine CC: 1998</li>
+    <li>Torque: 300 NM</li>
+    <li>Wheelbase: 2851 mm</li>
+  `;
+
+  // ✅ Save inquiry to Firebase
+  btn.onclick = () => {
+  window.open(waLink, "_blank"); // open WhatsApp immediately
+
+  // log to Firebase (optional, async)
+  db.collection("whatsapp_inquiries").add({
+    carName: car.name,
+    img: car.img,
+    email: user?.email || "guest",
+    time: new Date().toISOString()
+  }).catch((err) => {
+    console.warn("Logging failed:", err.message); // just log, don’t block WhatsApp
+  });
+};
+
+  qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(waLink)}&size=150x150`;
+  popup.classList.remove("hidden");
+  popup.onclick = e => {
+    if (e.target.id === "popup") popup.classList.add("hidden");
+  };
+}
+
+// Toggle Login/Logout
+const authBtn = document.getElementById("authBtn");
+if (user) {
+  authBtn.textContent = "Logout";
+  authBtn.classList.add("bg-red-600", "text-white", "px-3", "py-1", "rounded");
+  authBtn.onclick = () => {
+    localStorage.removeItem("user");
+    localStorage.removeItem("cart");
+    location.reload();
+  };
+}
+</script>
+</body>
+</html>

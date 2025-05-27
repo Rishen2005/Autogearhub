@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Products - AutoGear Hub</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .popup-blur {
+      position: fixed;
+      inset: 0;
+      background-color: rgba(0,0,0,0.6);
+      backdrop-filter: blur(6px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 50;
+    }
+    .popup-content {
+      background-color: white;
+      color: black;
+      padding: 1.5rem;
+      border-radius: 1rem;
+      max-width: 400px;
+      width: 90%;
+      text-align: center;
+      position: relative;
+    }
+    .popup-content ul {
+      list-style: disc;
+      padding-left: 1.5rem;
+      text-align: left;
+    }
+    .popup-content img {
+      width: 150px;
+      height: auto;
+      margin: 0 auto 1rem;
+      border-radius: 0.5rem;
+    }
+    .popup-content button {
+      background-color: #dc2626;
+      color: white;
+      padding: 0.5rem 1rem;
+      margin-top: 1rem;
+      border-radius: 0.5rem;
+    }
+    .close-btn {
+      position: absolute;
+      top: 0.5rem;
+      right: 1rem;
+      font-size: 1.2rem;
+      color: red;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body class="text-white" id="mainBody" style="background-image: url('https://images.unsplash.com/photo-1503376780353-7e6692767b70'); background-size: cover; background-position: center;">
+
+  <!-- HEADER -->
+  <header class="bg-white bg-opacity-90 shadow sticky top-0 z-50 px-6 py-4 flex items-center justify-between">
+    <div class="flex items-center space-x-2">
+      <img src="images/logo.png" alt="Logo" class="h-10 w-10 rounded-full">
+      <h1 class="text-2xl font-bold text-red-600">AutoGear Hub</h1>
+    </div>
+    <nav class="space-x-4 text-black">
+      <a href="index.html">Home</a>
+      <a href="products.html" class="text-red-600 font-semibold">Products</a>
+      <a href="cars.html">Cars</a>
+      <a href="about.html">About</a>
+      <a href="cart.html">Cart (<span class="cart-count">0</span>)</a>
+      <a href="login.html" id="authBtn">Login</a>
+    </nav>
+  </header>
+
+  <!-- SEARCH BAR -->
+  <div class="max-w-md mx-auto mt-6">
+    <input id="searchInput" type="text" placeholder="Search products..." class="w-full px-4 py-2 rounded border text-black">
+  </div>
+
+  <!-- PRODUCT GRID -->
+  <main class="p-6">
+    <h2 class="text-3xl font-bold text-center mb-8 text-red-600">Engine Parts</h2>
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-6" id="productGrid"></div>
+  </main>
+
+  <!-- POPUP -->
+  <div id="popup" class="popup-blur hidden">
+    <div class="popup-content" id="popupContent">
+      <span class="close-btn" onclick="document.getElementById('popup').classList.add('hidden')">&times;</span>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div id="toast" class="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-black text-white px-4 py-2 rounded shadow z-50 hidden"></div>
+
+  <script>
+    const user = localStorage.getItem("user");
+
+    const products = [
+      { id: 1, name: "Spark Plug", price: 20, img: "images/product1.png", compatible: ["Proton Wira", "Perodua Kancil", "Honda Civic"] },
+      { id: 2, name: "Oil Filter", price: 15, img: "images/product2.png", compatible: ["Toyota Vios", "Perodua Axia"] },
+      { id: 3, name: "Timing Belt", price: 90, img: "images/product3.png", compatible: ["Nissan Almera", "Proton Saga"] },
+      { id: 4, name: "Fuel Injector", price: 130, img: "images/product4.png", compatible: ["BMW E90", "Toyota Camry"] },
+      { id: 5, name: "Air Filter", price: 25, img: "images/product5.png", compatible: ["Hyundai Ioniq", "Kia Rio"] },
+      { id: 6, name: "Radiator Hose", price: 30, img: "images/product6.png", compatible: ["Mazda CX-5", "Honda Jazz"] },
+      { id: 7, name: "Ignition Coil", price: 100, img: "images/product7.png", compatible: ["Mercedes-Benz C200", "Volvo S60"] },
+      { id: 8, name: "Battery Terminal", price: 10, img: "images/product8.png", compatible: ["Toyota Hilux", "Ford Ranger"] },
+      { id: 9, name: "Water Pump", price: 180, img: "images/product9.png", compatible: ["Perodua Bezza", "Mitsubishi Triton"] },
+      { id: 10, name: "Thermostat", price: 50, img: "images/product10.png", compatible: ["Subaru XV", "Chevrolet Cruze"] },
+      { id: 11, name: "AC Compressor", price: 300, img: "images/product11.png", compatible: ["Honda Accord", "Toyota Harrier"] },
+      { id: 12, name: "Brake Pads", price: 80, img: "images/product12.png", compatible: ["Nissan Sentra", "Mazda 2"] },
+      { id: 13, name: "Clutch Disc", price: 150, img: "images/product13.png", compatible: ["Suzuki Swift", "Honda City"] },
+      { id: 14, name: "Alternator", price: 350, img: "images/product14.png", compatible: ["Toyota Fortuner", "Hyundai Elantra"] },
+      { id: 15, name: "Drive Shaft", price: 220, img: "images/product15.png", compatible: ["Perodua Alza", "Proton Persona"] },
+      { id: 16, name: "Head Gasket", price: 120, img: "images/product16.png", compatible: ["Volkswagen Polo", "BMW X1"] },
+      { id: 17, name: "Crankshaft Pulley", price: 140, img: "images/product17.png", compatible: ["Ford Fiesta", "Toyota Innova"] },
+      { id: 18, name: "Throttle Body", price: 200, img: "images/product18.png", compatible: ["Peugeot 208", "Renault Captur"] },
+      { id: 19, name: "Camshaft Sensor", price: 90, img: "images/product19.png", compatible: ["Honda CR-V", "Nissan X-Trail"] },
+      { id: 20, name: "Radiator Fan", price: 160, img: "images/product20.png", compatible: ["Perodua Aruz", "Toyota Avanza"] }
+    ];
+
+    let selectedProduct = null;
+
+    function showPopup(product) {
+      selectedProduct = product;
+      const cart = JSON.parse(localStorage.getItem("cart")) || [];
+      const found = cart.find(p => p.id === product.id);
+      const quantity = found?.quantity || 1;
+
+      const content = document.getElementById("popupContent");
+      content.innerHTML = `
+        <span class="close-btn" onclick="document.getElementById('popup').classList.add('hidden')">&times;</span>
+        <img src="${product.img}" alt="${product.name}">
+        <h2 class="text-xl font-bold mb-2">${product.name}</h2>
+        <p><strong>Compatible with:</strong></p>
+        <ul>${product.compatible.map(c => `<li>${c}</li>`).join("")}</ul>
+        <div class="flex items-center justify-center space-x-4 mt-4">
+          <button onclick="changeQuantity(-1)" class="bg-gray-300 text-black font-bold px-3 py-1 rounded">-</button>
+          <span id="qtyDisplay" class="text-lg font-bold">${quantity}</span>
+          <button onclick="changeQuantity(1)" class="bg-gray-300 text-black font-bold px-3 py-1 rounded">+</button>
+        </div>
+        <button onclick="saveToCart()" class="bg-red-600 text-white px-4 py-2 mt-4 rounded">Update Cart</button>
+      `;
+      document.getElementById("popup").classList.remove("hidden");
+    }
+
+    function changeQuantity(change) {
+      const qtyDisplay = document.getElementById("qtyDisplay");
+      let qty = parseInt(qtyDisplay.textContent);
+      qty += change;
+      if (qty < 0) qty = 0;
+      qtyDisplay.textContent = qty;
+    }
+
+    function saveToCart() {
+      const qty = parseInt(document.getElementById("qtyDisplay").textContent);
+      let cart = JSON.parse(localStorage.getItem("cart")) || [];
+
+      const index = cart.findIndex(p => p.id === selectedProduct.id);
+      if (qty === 0 && index > -1) {
+        cart.splice(index, 1);
+      } else if (index > -1) {
+        cart[index].quantity = qty;
+      } else {
+        cart.push({ ...selectedProduct, quantity: qty });
+      }
+
+      localStorage.setItem("cart", JSON.stringify(cart));
+      updateCartCount();
+      document.getElementById("popup").classList.add("hidden");
+      showToast(`${selectedProduct.name} updated in cart`);
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.remove("hidden");
+      setTimeout(() => toast.classList.add("hidden"), 2000);
+    }
+
+    function updateCartCount() {
+      const cart = JSON.parse(localStorage.getItem("cart")) || [];
+      const total = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
+      document.querySelector(".cart-count").textContent = total;
+    }
+
+    function redirectToLogin(product) {
+      localStorage.setItem("redirectAfterLogin", "products.html");
+      localStorage.setItem("pendingItem", JSON.stringify(product));
+      window.location.href = "login.html";
+    }
+
+    function renderProducts(filtered = products) {
+      const grid = document.getElementById("productGrid");
+      grid.innerHTML = "";
+      filtered.forEach(p => {
+        const div = document.createElement("div");
+        div.className = "bg-white bg-opacity-90 rounded-lg p-4 text-black";
+        div.innerHTML = `
+          <img src="${p.img}" alt="${p.name}" class="h-44 w-full object-contain rounded mb-2">
+          <h3 class="text-lg font-bold">${p.name}</h3>
+          <p class="text-sm">RM ${p.price}</p>
+          <button class="bg-red-600 text-white px-3 py-1 mt-2 rounded">Add to Cart</button>
+        `;
+        const btn = div.querySelector("button");
+        btn.onclick = () => {
+          user ? showPopup(p) : redirectToLogin(p);
+        };
+        grid.appendChild(div);
+      });
+    }
+
+    document.getElementById("searchInput").addEventListener("input", (e) => {
+      const keyword = e.target.value.toLowerCase();
+      const filtered = products.filter(p => p.name.toLowerCase().includes(keyword));
+      renderProducts(filtered);
+    });
+
+    const authBtn = document.getElementById("authBtn");
+    if (user) {
+      authBtn.textContent = "Logout";
+      authBtn.classList.add("bg-red-600", "text-white", "px-3", "py-1", "rounded");
+      authBtn.onclick = () => {
+        localStorage.removeItem("user");
+        localStorage.removeItem("cart");
+        location.reload();
+      };
+    }
+
+    updateCartCount();
+    renderProducts();
+  </script>
+</body>
+</html>

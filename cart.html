@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Cart - AutoGear Hub</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- ✅ Firebase SDKs (Compatible v8) -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+  <script>
+    // ✅ Your Firebase config (use your full key)
+    const firebaseConfig = {
+      apiKey: "AIzaSyBhUjoLMHGVEZW5IFEZ9cfigW5T362EJ6c",
+      authDomain: "autogearhub123.firebaseapp.com",
+      projectId: "autogearhub123",
+      storageBucket: "autogearhub123.appspot.com",
+      messagingSenderId: "276265834362",
+      appId: "1:276265834362:web:f783d3ee91246f04ec68c3"
+    };
+
+    // ✅ Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+  </script>
+</head>
+<body class="text-white min-h-screen bg-cover bg-center bg-no-repeat" style="background-image: url('https://images.unsplash.com/photo-1503376780353-7e6692767b70');">
+  <!-- Header -->
+  <header class="bg-white bg-opacity-90 shadow sticky top-0 z-50 px-6 py-4 flex items-center justify-between">
+    <div class="flex items-center space-x-2">
+      <img src="images/logo.png" alt="Logo" class="h-10 w-10 rounded-full">
+      <h1 class="text-2xl font-bold text-red-600">AutoGear Hub</h1>
+    </div>
+    <nav class="space-x-4 text-black">
+      <a href="index.html">Home</a>
+      <a href="products.html">Products</a>
+      <a href="cars.html">Cars</a>
+      <a href="about.html">About</a>
+      <a href="cart.html" class="text-red-600 font-semibold">Cart</a>
+      <a href="login.html" id="authBtn">Login</a>
+    </nav>
+  </header>
+
+  <main class="p-6">
+    <h2 class="text-3xl font-bold text-center mb-6">Your Cart</h2>
+    <ul id="cartList" class="text-black bg-white bg-opacity-90 rounded-lg p-4 max-w-xl mx-auto mb-6 space-y-4"></ul>
+    <div class="text-center">
+      <button id="preOrderBtn" class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-full">Proceed to Pre-Order</button>
+    </div>
+  </main>
+
+  <script>
+    const user = JSON.parse(localStorage.getItem("user"));
+    const authBtn = document.getElementById("authBtn");
+    const cartList = document.getElementById("cartList");
+    let cart = JSON.parse(localStorage.getItem("cart")) || [];
+
+    // 🔄 Sync cart to Firestore
+    function syncCartToFirebase() {
+      if (!user?.email) return;
+      db.collection("cart").doc(user.email).set({
+        cart,
+        updatedAt: new Date()
+      });
+    }
+
+    // 🧠 Login/logout toggle
+    if (user) {
+      authBtn.textContent = "Logout";
+      authBtn.classList.add("bg-red-600", "text-white", "px-3", "py-1", "rounded");
+      authBtn.onclick = () => {
+        localStorage.removeItem("user");
+        localStorage.removeItem("cart");
+        window.location.href = "login.html";
+      };
+    } else {
+      window.location.href = "login.html";
+    }
+
+    // 🛒 Render cart
+    function renderCart() {
+      cartList.innerHTML = "";
+
+      if (cart.length === 0) {
+        cartList.innerHTML = "<p class='text-center text-gray-700'>Your cart is empty.</p>";
+        return;
+      }
+
+      cart.forEach((item, index) => {
+        const li = document.createElement("li");
+        li.className = "flex items-center justify-between border-b pb-2";
+
+        li.innerHTML = `
+          <div class="flex items-center space-x-4">
+            <img src="${item.img}" class="h-14 w-14 rounded object-cover" alt="${item.name}">
+            <div>
+              <h4 class="font-semibold">${item.name}</h4>
+              <p class="text-sm text-gray-700">RM ${item.price} × ${item.quantity} = RM ${(item.price * item.quantity).toFixed(2)}</p>
+              <div class="flex items-center space-x-2 mt-1">
+                <button onclick="changeQty(${index}, -1)" class="px-2 bg-gray-300 rounded text-black font-bold">-</button>
+                <span>${item.quantity}</span>
+                <button onclick="changeQty(${index}, 1)" class="px-2 bg-gray-300 rounded text-black font-bold">+</button>
+              </div>
+            </div>
+          </div>
+          <button class="text-red-600 hover:underline" onclick="removeItem(${index})">Remove</button>
+        `;
+        cartList.appendChild(li);
+      });
+
+      syncCartToFirebase(); // Sync on render
+    }
+
+    function changeQty(index, delta) {
+      cart[index].quantity += delta;
+      if (cart[index].quantity <= 0) {
+        cart.splice(index, 1);
+      }
+      localStorage.setItem("cart", JSON.stringify(cart));
+      renderCart();
+    }
+
+    function removeItem(index) {
+      cart.splice(index, 1);
+      localStorage.setItem("cart", JSON.stringify(cart));
+      renderCart();
+    }
+
+    document.getElementById("preOrderBtn").addEventListener("click", () => {
+      if (!user) {
+        localStorage.setItem("redirectAfterLogin", "cart.html");
+        return (window.location.href = "login.html");
+      }
+
+      if (cart.length === 0) {
+        alert("Your cart is empty. Redirecting to Products...");
+        window.location.href = "products.html";
+      } else {
+        localStorage.removeItem("whatsappCar");
+        window.location.href = "preorder.html";
+      }
+    });
+
+    renderCart();
+  </script>
+</body>
+</html>

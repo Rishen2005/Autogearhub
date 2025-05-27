@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>AutoGear Hub</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="text-white" style="background-image: url('https://images.unsplash.com/photo-1503376780353-7e6692767b70'); background-size: cover; background-position: center;">
+  <!-- Header -->
+  <header class="bg-white bg-opacity-90 shadow sticky top-0 z-50 px-6 py-4 flex items-center justify-between">
+    <div class="flex items-center space-x-2">
+      <img src="images/logo.png" alt="Logo" class="h-10 w-10 rounded-full">
+      <h1 class="text-2xl font-bold text-red-600">AutoGear Hub</h1>
+    </div>
+    <nav class="space-x-4 text-black">
+      <a href="index.html" class="text-red-600 font-semibold">Home</a>
+      <a href="products.html">Products</a>
+      <a href="cars.html">Cars</a>
+      <a href="about.html">About</a>
+      <a href="cart.html">Cart</a>
+      <a href="login.html" id="authBtn">Login</a>
+    </nav>
+  </header>
+
+  <!-- Hero -->
+  <main class="flex flex-col items-center justify-center h-[80vh] text-center">
+    <h2 class="text-4xl md:text-5xl font-bold mb-4">Discover Car Parts and Cars</h2>
+    <p class="text-lg mb-6">Pre-order items and get pickup confirmation via WhatsApp!</p>
+    <a href="login.html" id="exploreBtn" class="bg-red-600 text-white px-6 py-3 rounded-full hover:bg-red-700 transition">Explore Now</a>
+  </main>
+
+  <script>
+    const user = localStorage.getItem("user");
+    const exploreBtn = document.getElementById("exploreBtn");
+    const authBtn = document.getElementById("authBtn");
+
+    // Update auth button
+    if (user) {
+      authBtn.textContent = "Logout";
+      authBtn.classList.add("bg-red-600", "text-white", "px-3", "py-1", "rounded");
+      authBtn.onclick = () => {
+        localStorage.removeItem("user");
+        localStorage.removeItem("cart");
+        location.reload();
+      };
+
+      exploreBtn.href = "products.html";
+    } else {
+      exploreBtn.href = "login.html";
+    }
+  </script>
+</body>
+</html>

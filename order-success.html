@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Order Receipt - AutoGear Hub</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .receipt-bg {
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(6px);
+    }
+    .receipt-box {
+      max-width: 500px;
+      margin: auto;
+      padding: 2rem;
+      background: white;
+      color: black;
+      border-radius: 1rem;
+      box-shadow: 0 0 20px rgba(0,0,0,0.3);
+    }
+    .receipt-box h2 {
+      font-size: 1.75rem;
+      color: #dc2626;
+      font-weight: bold;
+      margin-bottom: 1rem;
+    }
+    .receipt-box table {
+      width: 100%;
+      margin-bottom: 1rem;
+    }
+    .receipt-box th, .receipt-box td {
+      text-align: left;
+      padding: 0.5rem 0;
+    }
+    .receipt-box th {
+      font-weight: bold;
+    }
+    .btn {
+      background-color: #16a34a;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 9999px;
+      font-weight: bold;
+      margin-top: 20px;
+    }
+    .btn:hover {
+      background-color: #15803d;
+    }
+  </style>
+</head>
+<body class="text-white receipt-bg min-h-screen flex items-center justify-center p-6" id="successBody" style="background-size: cover; background-position: center;">
+
+  <div class="receipt-box">
+    <h2 class="text-center">🧾 Order Receipt</h2>
+
+    <p><strong>Customer:</strong> <span id="custName">-</span></p>
+    <p><strong>Address:</strong> <span id="custAddress">-</span></p>
+    <p><strong>Phone:</strong> <span id="custPhone">-</span></p>
+    <p><strong>Date:</strong> <span id="orderDate">-</span></p>
+    <p><strong>Estimated Pickup Date:</strong> <span id="pickupDate">-</span></p>
+
+    <hr class="my-4">
+    <div id="orderDetails"></div>
+
+    <div class="text-center">
+      <button class="btn" onclick="window.print()">🖨️ Print Receipt</button>
+      <button class="btn ml-4" onclick="goHome()">🏠 Home</button>
+    </div>
+  </div>
+
+  <script>
+    const order = JSON.parse(localStorage.getItem("finalOrder"));
+    const phone = localStorage.getItem("phoneNumber") || "-";
+    const name = order?.name || "-";
+    const address = order?.address || "-";
+
+    const today = new Date().toLocaleDateString();
+    const pickupDate = order?.estimatedDate || new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toLocaleDateString();
+
+    document.getElementById("custName").textContent = name;
+    document.getElementById("custAddress").textContent = address;
+    document.getElementById("custPhone").textContent = phone;
+    document.getElementById("orderDate").textContent = today;
+    document.getElementById("pickupDate").textContent = pickupDate;
+
+    const container = document.getElementById("orderDetails");
+
+    if (order?.from === "car") {
+      container.innerHTML = `
+        <h3 class="text-lg font-bold mt-4 mb-2 text-red-600">Pre-Ordered Car</h3>
+        <p><strong>Car:</strong> ${order.name}</p>
+        <img src="${order.img}" alt="${order.name}" class="w-48 h-auto mt-2 rounded shadow">
+      `;
+    } else {
+      const cart = JSON.parse(localStorage.getItem("cart")) || [];
+      if (!cart.length) {
+        container.innerHTML = `<p>No products found in cart.</p>`;
+      } else {
+        let total = 0;
+        let table = `
+          <h3 class="text-lg font-bold mt-4 mb-2 text-red-600">Products</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Qty</th>
+                <th>Unit (RM)</th>
+                <th>Subtotal</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+
+        cart.forEach(item => {
+          const sub = item.price * item.quantity;
+          total += sub;
+          table += `
+            <tr>
+              <td>${item.name}</td>
+              <td>${item.quantity}</td>
+              <td>${item.price.toFixed(2)}</td>
+              <td>${sub.toFixed(2)}</td>
+            </tr>
+          `;
+        });
+
+        table += `
+            <tr><th colspan="3">Total</th><th>RM ${total.toFixed(2)}</th></tr>
+            </tbody></table>
+        `;
+        container.innerHTML = table;
+      }
+    }
+
+    function goHome() {
+      localStorage.removeItem("finalOrder");
+      localStorage.removeItem("cart");
+      localStorage.removeItem("whatsappCar");
+      window.location.href = "index.html";
+    }
+  </script>
+</body>
+</html>
